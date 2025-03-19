@@ -1,0 +1,11 @@
+[package]
+name = "deno-varnish"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+deno_core = "0.340.0"
+deno_resolver = "0.26.0"
+deno_runtime = { version = "0.203.0", features = ["transpile"] }
+tokio = { version = "1.44.1", features = ["full"] }
+sys_traits = "0.1.8"

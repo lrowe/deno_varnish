@@ -1,0 +1,135 @@
+// Copyright 2018-2025 the Deno authors. MIT license.
+
+#![allow(clippy::print_stdout)]
+#![allow(clippy::print_stderr)]
+
+use std::cell::RefCell;
+use std::path::Path;
+use std::rc::Rc;
+use std::sync::Arc;
+
+use deno_core::FsModuleLoader;
+use deno_core::ModuleSpecifier;
+use deno_core::error::AnyError;
+use deno_core::op2;
+//use deno_core::OpState;
+//use deno_core::v8;
+use deno_core::v8_set_flags;
+use deno_resolver::npm::DenoInNpmPackageChecker;
+use deno_resolver::npm::NpmResolver;
+use deno_runtime::deno_fs::RealFs;
+use deno_runtime::deno_permissions::PermissionsContainer;
+use deno_runtime::permissions::RuntimePermissionDescriptorParser;
+use deno_runtime::worker::MainWorker;
+use deno_runtime::worker::WorkerOptions;
+use deno_runtime::worker::WorkerServiceOptions;
+
+#[allow(dead_code)]
+mod varnish;
+
+#[op2(fast)]
+fn op_varnish_backend_response_str(status: u16, #[string] ctype: &str, #[string] data: &str) {
+    varnish::backend_response_str(status, ctype, &data);
+}
+/*
+#[op2]
+fn op_varnish_set_backend_get(
+    state: &mut OpState,
+    #[global] callback: v8::Global<v8::Function>,
+) -> Result<(), deno_error::JsErrorBox> {
+    state.put(callback);
+    Ok(())
+}
+*/
+deno_runtime::deno_core::extension!(
+    varnish_runtime,
+    ops = [op_varnish_backend_response_str],
+    esm_entry_point = "ext:varnish_runtime/bootstrap.js",
+    esm = [dir "src", "bootstrap.js"]
+);
+
+thread_local! {
+    static RUNTIME: RefCell<tokio::runtime::Runtime> = panic!("RUNTIME uninitialized");
+    static WORKER: RefCell<MainWorker> = panic!("WORKER uninitialized");
+}
+
+fn on_get(_url: &str, _arg: &str) -> ! {
+    RUNTIME.with_borrow(|runtime| {
+        WORKER.with_borrow_mut(|worker| {
+            runtime.block_on(async {
+                worker.run_event_loop(false).await.unwrap();
+                varnish::backend_response_str(500, "text/plain", "script did not finish");
+            })
+        })
+    })
+}
+
+// From deno cli/util/v8.rs
+#[inline(always)]
+pub fn get_v8_flags_from_env() -> Vec<String> {
+    std::env::var("DENO_V8_FLAGS")
+        .ok()
+        .map(|flags| flags.split(',').map(String::from).collect::<Vec<String>>())
+        .unwrap_or_default()
+}
+
+fn main() -> Result<(), AnyError> {
+    // "--jitless,--single-threaded,--single-threaded-gc"
+    let mut v8_flags = vec![
+        "UNUSED_BUT_NECESSARY_ARG0".to_string(),
+        "--stack-size=1024".to_string(),
+        "--no-harmony-import-assertions".to_string(),
+    ];
+    v8_flags.extend(get_v8_flags_from_env());
+    let unrecognized = v8_set_flags(v8_flags);
+    for flag in unrecognized.iter().skip(1) {
+        eprintln!("Unrecognized v8 flag {flag}");
+    }
+    deno_core::JsRuntime::init_platform(None, false);
+    let script = std::env::var_os("SCRIPT").unwrap();
+    let main_module = ModuleSpecifier::from_file_path(Path::new(&script)).unwrap();
+    eprintln!("Running {main_module}...");
+    let fs = Arc::new(RealFs);
+    let permission_desc_parser = Arc::new(RuntimePermissionDescriptorParser::new(
+        sys_traits::impls::RealSys,
+    ));
+    let mut worker = MainWorker::bootstrap_from_options(
+        &main_module,
+        WorkerServiceOptions::<
+            DenoInNpmPackageChecker,
+            NpmResolver<sys_traits::impls::RealSys>,
+            sys_traits::impls::RealSys,
+        > {
+            module_loader: Rc::new(FsModuleLoader),
+            permissions: PermissionsContainer::allow_all(permission_desc_parser),
+            blob_store: Default::default(),
+            broadcast_channel: Default::default(),
+            feature_checker: Default::default(),
+            node_services: Default::default(),
+            npm_process_state_provider: Default::default(),
+            root_cert_store_provider: Default::default(),
+            fetch_dns_resolver: Default::default(),
+            shared_array_buffer_store: Default::default(),
+            compiled_wasm_module_store: Default::default(),
+            v8_code_cache: Default::default(),
+            fs,
+        },
+        WorkerOptions {
+            extensions: vec![varnish_runtime::init_ops_and_esm()],
+            ..Default::default()
+        },
+    );
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    runtime.block_on(async {
+        worker.execute_main_module(&main_module).await?;
+        worker.run_event_loop(false).await?;
+        Ok::<(), AnyError>(())
+    })?;
+    RUNTIME.set(runtime);
+    WORKER.set(worker);
+    varnish::set_backend_get(on_get);
+    varnish::wait_for_requests();
+}
