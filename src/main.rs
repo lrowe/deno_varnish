@@ -74,7 +74,7 @@ pub fn get_v8_flags_from_env() -> Vec<String> {
 }
 
 fn main() -> Result<(), AnyError> {
-    // "--jitless,--single-threaded,--single-threaded-gc"
+    // DENO_V8_FLAGS="--jitless,--single-threaded,--single-threaded-gc"
     let mut v8_flags = vec![
         "UNUSED_BUT_NECESSARY_ARG0".to_string(),
         "--stack-size=1024".to_string(),
@@ -120,7 +120,6 @@ fn main() -> Result<(), AnyError> {
         },
     );
     let runtime = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
         .build()
         .unwrap();
     runtime.block_on(async {

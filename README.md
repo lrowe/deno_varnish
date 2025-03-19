@@ -36,7 +36,7 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 #0  0x[...] in deno_varnish::varnish::set_backend_get ()
 ```
 
-## VM 'deno-varnish' exception: Too many relocations
+## Running inside Varnish TinyKVM
 
 I've been using podman but this should also work under docker.
 I installed the static version of podman from https://github.com/mgoltzsche/podman-static on Ubuntu 24.04 and followed the apparmor profile instructions.
@@ -52,42 +52,44 @@ Then run concurrently:
     podman exec -it deno-varnish varnishlog
     curl http://localhost:8080/hello
 
-## Error from varnishlog
 
-Failed request:
+## Issues
+
+### Unhandled system calls
+
+Does not prevent it from working. https://filippo.io/linux-syscall-table/
 
 ```
-*   << BeReq    >> 3         
--   Begin          bereq 2 pass
--   VCL_use        boot
--   Timestamp      Start: 1742371185.343647 0.000000 0.000000
--   BereqMethod    GET
--   BereqURL       /foo
--   BereqProtocol  HTTP/1.1
--   BereqHeader    Host: localhost:8080
--   BereqHeader    User-Agent: curl/8.5.0
--   BereqHeader    Accept: */*
--   BereqHeader    X-Forwarded-For: 192.168.50.20
--   BereqHeader    Via: 1.1 3ac4cb34604a (Varnish/7.6)
--   BereqHeader    X-Varnish: 3
--   VCL_call       BACKEND_FETCH
--   VCL_return     fetch
--   Timestamp      Fetch: 1742371185.343837 0.000190 0.000190
+Info: Child (15) said deno-varnish: Unhandled system call 230  # clock_nanosleep
+Info: Child (15) said deno-varnish: Unhandled system call 332  # statx
+```
+
+## (Resolved) failed to create UnixStream
+
+Avoid calling .enable_all() when building the tokio runtime as that includes .enable_io() which triggers this error.
+
+```
+*   << BeReq    >> 3
+...
+-   VCL_Log        deno-varnish says: Running
+-   VCL_Log        deno-varnish says: file:///main.js
+-   VCL_Log        deno-varnish says: ...
+
+-   VCL_Log        deno-varnish says:
+thread 'main' panicked at /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.44.1/src/signal/unix.rs:60:53:
+failed to create UnixStream: Os { code: 38, kind: Unsupported, message: "Function not implemented" }
+
+-   VCL_Log        deno-varnish says: note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+### (Resolved) VM 'deno-varnish' exception: Too many relocations
+
+Fixed in varnish/tinykvm#21.
+
+```
+*   << BeReq    >> 3
+...
 -   Error          VM 'deno-varnish' exception: Too many relocations
 -   Error          KVM: Unable to reserve VM for index 0, program deno-varnish
--   Timestamp      Beresp: 1742371185.593593 0.249946 0.249756
--   Timestamp      Error: 1742371185.593596 0.249949 0.000003
--   BerespProtocol HTTP/1.1
--   BerespStatus   503
--   BerespReason   Backend fetch failed
--   BerespHeader   Date: Wed, 19 Mar 2025 07:59:45 GMT
--   BerespHeader   Server: Varnish
--   VCL_call       BACKEND_ERROR
--   BerespHeader   Content-Type: text/html; charset=utf-8
--   BerespHeader   Retry-After: 5
--   VCL_return     deliver
--   Storage        malloc Transient
--   Length         278
--   BereqAcct      0 0 0 0 0 0
--   End            
+...
 ```

@@ -11,11 +11,22 @@ sub vcl_init {
         """{
             "filename": "/deno-varnish",
             "verbose": true,
+            "max_memory": 3500,
             "environment": [
+                "RUST_BACKTRACE=full",
                 "DENO_V8_FLAGS=--jitless,--single-threaded,--single-threaded-gc",
                 "SCRIPT=/main.js"
             ],
             "allowed_paths": [
+                "/proc/self/mountinfo",
+                "/proc/self/maps",
+                "/proc/self/cgroup",
+                "/proc/stat",
+                "/sys/devices/system/cpu/online",
+                "/sys/devices/system/cpu/cpu0/tsc_freq_khz",
+                "/sys/fs/cgroup/cgroup.controllers",
+                "/sys/fs/cgroup/cpu.max",
+                "/dev/urandom",
                 "/main.js"
             ]
         }""");
