@@ -423,6 +423,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89e25b6adfb930f02d1981565a6e5d9c547ac15a96606256d3b59040e5cd4ca3"
 
 [[package]]
+name = "bencher"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7dfdb4953a096c551ce9ace855a604d702e6e62d77fac690575ae347571717f5"
+
+[[package]]
 name = "better_scoped_tls"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1152,6 +1158,7 @@ dependencies = [
 name = "deno-varnish"
 version = "0.1.0"
 dependencies = [
+ "deno_bench_util",
  "deno_core",
  "deno_resolver",
  "deno_runtime",
@@ -1200,6 +1207,17 @@ dependencies = [
  "thiserror 2.0.12",
  "unicode-width 0.2.0",
  "url",
+]
+
+[[package]]
+name = "deno_bench_util"
+version = "0.189.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9c68e3000b45f5223460adc323580eeab5d2bb961a9732a5958209838cda6ce"
+dependencies = [
+ "bencher",
+ "deno_core",
+ "tokio",
 ]
 
 [[package]]

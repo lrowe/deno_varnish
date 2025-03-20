@@ -9,3 +9,10 @@ deno_resolver = "0.26.0"
 deno_runtime = { version = "0.203.0", features = ["transpile"] }
 tokio = { version = "1.44.1", features = ["rt"] }
 sys_traits = "0.1.8"
+
+[dev-dependencies]
+deno_bench_util = "0.189.0"
+
+[[bench]]
+name = "invoke_op"
+harness = false
