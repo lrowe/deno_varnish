@@ -55,7 +55,88 @@ Then run concurrently:
 
 ## Issues
 
-### Unhandled system calls
+### Backend VM memory exception: page_at: page directory not present
+
+Only triggered after switching to `wait_for_requests_paused` which works in the rust demo.
+
+```
+*   << BeReq    >> 3
+-   Begin          bereq 2 pass
+-   VCL_use        boot
+-   Timestamp      Start: 1742507690.861852 0.000000 0.000000
+-   BereqMethod    GET
+-   BereqURL       /foo
+-   BereqProtocol  HTTP/1.1
+-   BereqHeader    Host: localhost:8080
+-   BereqHeader    User-Agent: curl/8.5.0
+-   BereqHeader    Accept: */*
+-   BereqHeader    X-Forwarded-For: 192.168.50.20
+-   BereqHeader    Via: 1.1 61ebf08ab1c1 (Varnish/7.6)
+-   BereqHeader    X-Varnish: 3
+-   VCL_call       BACKEND_FETCH
+-   VCL_return     fetch
+-   Timestamp      Fetch: 1742507690.862047 0.000194 0.000194
+-   VCL_Log        deno-varnish says: Running
+-   VCL_Log        deno-varnish says: file:///main.js
+-   VCL_Log        deno-varnish says: ...
+
+-   VCL_Log        deno-varnish says: Hello from deno_varnish
+
+-   VCL_Log        deno-varnish says: before wait_for_requests_paused
+
+-   Error          Backend VM memory exception: page_at: page directory not present (addr: 0x1000003000, size: 0x40000000)
+-   VCL_Log        deno-varnish says: CR0: 0x80040033  CR3: 0x7000000000
+
+-   VCL_Log        deno-varnish says: CR2: 0x0  CR4: 0x350620
+
+-   VCL_Log        deno-varnish says: RAX: 0x0  RBX: 0x0  RCX: 0x0
+
+-   VCL_Log        deno-varnish says: RDX: 0x0  RSI: 0x0  RDI: 0x0
+
+-   VCL_Log        deno-varnish says: RIP: 0x0  RBP: 0x0  RSP: 0x0
+
+-   VCL_Log        deno-varnish says: SS: 0x23  CS: 0x2B  DS: 0x23  FS: 0x0  GS: 0x0
+
+-   VCL_Log        deno-varnish says: FS BASE: 0x65E1040  GS BASE: 0x5030
+
+-   VCL_Log        deno-varnish says: [0] 0x       0
+
+-   VCL_Log        deno-varnish says: CR0: 0x80040033  CR3: 0x7000000000
+
+-   VCL_Log        deno-varnish says: CR2: 0x0  CR4: 0x350620
+
+-   VCL_Log        deno-varnish says: RAX: 0x0  RBX: 0x0  RCX: 0x0
+
+-   VCL_Log        deno-varnish says: RDX: 0x0  RSI: 0x0  RDI: 0x0
+
+-   VCL_Log        deno-varnish says: RIP: 0x0  RBP: 0x0  RSP: 0x0
+
+-   VCL_Log        deno-varnish says: SS: 0x23  CS: 0x2B  DS: 0x23  FS: 0x0  GS: 0x0
+
+-   VCL_Log        deno-varnish says: FS BASE: 0x65E1040  GS BASE: 0x5030
+
+-   VCL_Log        deno-varnish says: [0] 0x       0
+
+-   BerespProtocol HTTP/1.1
+-   BerespStatus   500
+-   BerespReason   Internal Server Error
+-   BerespHeader   Content-Length: 0
+-   BerespHeader   Last-Modified: Thu, 20 Mar 2025 21:54:52 GMT
+-   Timestamp      Beresp: 1742507692.147852 1.285999 1.285804
+-   BerespHeader   Date: Thu, 20 Mar 2025 21:54:52 GMT
+-   VCL_call       BACKEND_RESPONSE
+-   VCL_return     deliver
+-   Timestamp      Process: 1742507692.147862 1.286010 0.000010
+-   Filters
+-   Storage        malloc Transient
+-   Fetch_Body     3 length -
+-   Timestamp      BerespBody: 1742507692.147911 1.286059 0.000048
+-   Length         0
+-   BereqAcct      0 0 0 0 0 0
+-   End
+```
+
+### (Resolved) Unhandled system calls
 
 Does not prevent it from working. https://filippo.io/linux-syscall-table/
 

@@ -3,7 +3,6 @@
 #![allow(clippy::print_stdout)]
 #![allow(clippy::print_stderr)]
 
-use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -47,22 +46,6 @@ deno_runtime::deno_core::extension!(
     esm_entry_point = "ext:varnish_runtime/bootstrap.js",
     esm = [dir "src", "bootstrap.js"]
 );
-
-thread_local! {
-    static RUNTIME: RefCell<tokio::runtime::Runtime> = panic!("RUNTIME uninitialized");
-    static WORKER: RefCell<MainWorker> = panic!("WORKER uninitialized");
-}
-
-fn on_get(_url: &str, _arg: &str) -> ! {
-    RUNTIME.with_borrow(|runtime| {
-        WORKER.with_borrow_mut(|worker| {
-            runtime.block_on(async {
-                worker.run_event_loop(false).await.unwrap();
-                varnish::backend_response_str(500, "text/plain", "script did not finish");
-            })
-        })
-    })
-}
 
 // From deno cli/util/v8.rs
 #[inline(always)]
@@ -119,16 +102,20 @@ fn main() -> Result<(), AnyError> {
             ..Default::default()
         },
     );
-    let runtime = tokio::runtime::Builder::new_current_thread()
+    tokio::runtime::Builder::new_current_thread()
         .build()
-        .unwrap();
-    runtime.block_on(async {
-        worker.execute_main_module(&main_module).await?;
-        worker.run_event_loop(false).await?;
-        Ok::<(), AnyError>(())
-    })?;
-    RUNTIME.set(runtime);
-    WORKER.set(worker);
-    varnish::set_backend_get(on_get);
-    varnish::wait_for_requests();
+        .unwrap()
+        .block_on(async {
+            worker.execute_main_module(&main_module).await?;
+            worker.run_event_loop(false).await?;
+            Ok::<(), AnyError>(())
+        })?;
+    loop {
+        eprintln!("before wait_for_requests_paused");
+        let request = varnish::wait_for_requests_paused();
+        eprintln!("after wait_for_requests_paused");
+        eprintln!("request {} {}", request.method(), request.url());
+        let data = format!("script did not finish {}", &request.url());
+        varnish::backend_response_str(500, "text/plain", data.as_str());
+    }
 }
