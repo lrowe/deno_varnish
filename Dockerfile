@@ -23,11 +23,21 @@ RUN set -e; \
 
 FROM rust:1.85-slim-bookworm AS build_rust
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get -y install curl libclang-dev build-essential && rm -rf /var/lib/apt/lists/*
-COPY  --exclude=*.vcl --exclude=*.md --exclude=*.js --exclude=Dockerfile . /build/
 WORKDIR /build
 # Do not put rustflags in .cargo/config.toml as that causes build error:
 # error: cannot produce proc-macro for `asn1-rs-derive v0.4.0` as the target `x86_64-unknown-linux-gnu` does not support these crate types
-RUN RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
+ENV RUSTFLAGS="-C target-feature=+crt-static"
+# Build and cache the dependencies
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src benches \
+    && echo "fn main() {}" > src/main.rs \
+    && echo "" > benches/invoke_op.rs \
+    && cargo fetch \
+    && cargo build --release --target x86_64-unknown-linux-gnu \
+    && rm -rf src benches
+# Build
+COPY --exclude=*.vcl --exclude=*.md --exclude=*.js --exclude=Dockerfile . ./
+RUN  cargo build --release --target x86_64-unknown-linux-gnu
 
 FROM varnish
 ENV VMOD_RUN_DEPS="libcurl4 libpcre3 libarchive13"
