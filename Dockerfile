@@ -1,21 +1,20 @@
 FROM varnish:7.6.1 AS varnish
 FROM varnish AS build_vmod
-ENV VMOD_BUILD_DEPS="libcurl4-openssl-dev libpcre3-dev libarchive-dev git cmake build-essential"
+ENV VMOD_BUILD_DEPS="libcurl4-openssl-dev libpcre3-dev libarchive-dev libjemalloc-dev git cmake build-essential"
 USER root
+WORKDIR /libvmod-tinykvm
 RUN set -e; \
     export DEBIAN_FRONTEND=noninteractive; \
     apt-get update; \
     apt-get -y install /pkgs/*.deb $VMOD_DEPS $VMOD_BUILD_DEPS; \
     rm -rf /var/lib/apt/lists/*;
 RUN set -e; \
-    cd /; \
-    git clone https://github.com/varnish/libvmod-tinykvm.git; \
-    cd libvmod-tinykvm \
-    git checkout 38b70c7c971c662650985b61647139782f1c9ecb; \
-    git submodule init; \
-    git submodule update;
+    git init; \
+    git remote add origin https://github.com/varnish/libvmod-tinykvm.git; \
+    git fetch --depth 1 origin 38890fd032764f71fd376c478613f432b6adbec8; \
+    git checkout FETCH_HEAD; \
+    git submodule update --init --recursive;
 RUN set -e; \
-    cd /libvmod-tinykvm; \
     mkdir -p .build; \
     cd .build; \
     cmake .. -DCMAKE_BUILD_TYPE=Release -DVARNISH_PLUS=OFF; \
@@ -40,7 +39,7 @@ COPY --exclude=*.vcl --exclude=*.md --exclude=*.js --exclude=Dockerfile . ./
 RUN  cargo build --release --target x86_64-unknown-linux-gnu
 
 FROM varnish
-ENV VMOD_RUN_DEPS="libcurl4 libpcre3 libarchive13"
+ENV VMOD_RUN_DEPS="libcurl4 libpcre3 libarchive13 libjemalloc2"
 USER root
 RUN set -e; \
     export DEBIAN_FRONTEND=noninteractive; \
