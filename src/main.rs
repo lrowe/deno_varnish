@@ -12,7 +12,7 @@ use deno_core::ModuleSpecifier;
 use deno_core::error::AnyError;
 use deno_core::op2;
 //use deno_core::OpState;
-//use deno_core::v8;
+use deno_core::v8;
 use deno_core::v8_set_flags;
 use deno_resolver::npm::DenoInNpmPackageChecker;
 use deno_resolver::npm::NpmResolver;
@@ -68,7 +68,8 @@ fn main() -> Result<(), AnyError> {
     for flag in unrecognized.iter().skip(1) {
         eprintln!("Unrecognized v8 flag {flag}");
     }
-    deno_core::JsRuntime::init_platform(None, false);
+    let v8_platform = v8::Platform::new_single_threaded(true).make_shared();
+    deno_core::JsRuntime::init_platform(Some(v8_platform), false);
     let script = std::env::var_os("SCRIPT").unwrap();
     let main_module = ModuleSpecifier::from_file_path(Path::new(&script)).unwrap();
     eprintln!("Running {main_module}...");
