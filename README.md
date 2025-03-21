@@ -12,10 +12,9 @@ Uses the static glibc approach from [Building static Rust binaries for Linux](ht
 By not using musl we avoid a lengthy v8 build and reuse the published glibc build artifacts from https://github.com/denoland/rusty_v8/releases/.
 
 ```
-RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gn
+RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
 ldd ./target/x86_64-unknown-linux-gnu/release/deno-varnish # statically linked
 DENO_V8_FLAGS="--jitless,--single-threaded,--single-threaded-gc" SCRIPT="$PWD/main.js" ./target/x86_64-unknown-linux-gnu/release/deno-varnish
-lease/deno-varnish
 ```
 
 This produces the following output with the expected segmentation fault.
@@ -41,6 +40,10 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 I've been using podman but this should also work under docker.
 I installed the static version of podman from https://github.com/mgoltzsche/podman-static on Ubuntu 24.04 and followed the apparmor profile instructions.
 And replaced `docker.io` with `mirror.gcr.io` in /etc/containers/registries.conf.
+
+Enable huge pages on host
+
+    echo 2048 | sudo tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 
 Build 
 
