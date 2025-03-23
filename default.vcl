@@ -11,7 +11,7 @@ sub vcl_init {
         """{
             "filename": "/deno-varnish",
             "verbose": true,
-            "max_memory": 3500,
+            "max_memory": 70000,
             "environment": [
                 "RUST_BACKTRACE=full",
                 "DENO_V8_FLAGS=--jitless,--single-threaded,--single-threaded-gc",
@@ -30,6 +30,7 @@ sub vcl_init {
                 "/main.js"
             ]
         }""");
+       tinykvm.start("deno-varnish");
 }
 
 sub vcl_recv {
