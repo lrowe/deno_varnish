@@ -57,11 +57,12 @@ pub fn get_v8_flags_from_env() -> Vec<String> {
 }
 
 fn main() -> Result<(), AnyError> {
-    // DENO_V8_FLAGS="--jitless,--single-threaded,--single-threaded-gc"
     let mut v8_flags = vec![
         "UNUSED_BUT_NECESSARY_ARG0".to_string(),
         "--stack-size=1024".to_string(),
         "--no-harmony-import-assertions".to_string(),
+        // Required for v8::Platform::new_single_threaded
+        "--single-threaded".to_string(),
     ];
     v8_flags.extend(get_v8_flags_from_env());
     let unrecognized = v8_set_flags(v8_flags);
