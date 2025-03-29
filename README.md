@@ -14,7 +14,7 @@ By not using musl we avoid a lengthy v8 build and reuse the published glibc buil
 ```
 RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
 ldd ./target/x86_64-unknown-linux-gnu/release/deno-varnish # statically linked
-DENO_V8_FLAGS="--jitless,--single-threaded,--single-threaded-gc" SCRIPT="$PWD/main.js" ./target/x86_64-unknown-linux-gnu/release/deno-varnish
+SCRIPT="$PWD/main.js" ./target/x86_64-unknown-linux-gnu/release/deno-varnish
 ```
 
 This produces the following output with the expected segmentation fault.
@@ -34,6 +34,14 @@ gdb ./target/x86_64-unknown-linux-gnu/release/deno-varnish core[...]
 Program terminated with signal SIGSEGV, Segmentation fault.
 #0  0x[...] in deno_varnish::varnish::set_backend_get ()
 ```
+
+### Running under gdb
+
+* Use `rust-gdb` wrapper.
+
+* Unsure how to load libc debug symbols when debugging crt-static build.
+
+    - Not sufficent to just install `libc6-dbg`.
 
 ## Running inside Varnish TinyKVM
 
@@ -55,10 +63,75 @@ Then run concurrently:
     podman exec -it deno-varnish varnishlog
     curl http://localhost:8080/hello
 
+### Connecting with gdb
 
-## Issues
+* Use `rust-gdb` wrapper.
 
-### Backend VM memory exception: page_at: page directory not present
+* Configure  with `"allow_debug": true`. Watch the connection timeout along with timeouts from `"max_boot_time"` and `"max_request_time"`.
+
+    > Allow remotely debugging requests with GDB. The request to be debugged has to cause a breakpoint. In the C API this is done with `sys_breakpoint()`. The GDB instance must load the program using `file myprogram` before it can remotely connect using target `remote :2159`.
+
+    [JSON Glossary](https://github.com/varnish/libvmod-tinykvm/blob/main/docs/glossary.md)
+
+    - Does not work in combination with `tinykvm.start` in `vcl_init`.
+
+#### Debugging through JS stackframes
+
+Add `--gdbjit_full` to v8 flags. ``--gdbjit` doesn't really do anything. No need to rebuild.
+
+Slows things down. Can take a minute or so to hit a breakpoint that would otherwise be instantaneous.
+
+## Issues and open questions
+
+### Why does updating rust dependencies break things
+
+Causes a check to fail in mutex.cc:75.
+
+Presumably down to v8 update from 134.5.0 to 135.1.0.
+
+### Do we want any of these proc / sys mounts?
+
+Should check where each of these are used. Easiest way seem to be running under gdb with `catch syscall openat`.
+
+None of these seem to be absolutely necessary.
+
+Everything under `/proc` is misleading as it reflects the host process not the current process running within the VM.
+
+```
+    "/proc/self/mountinfo",
+    "/proc/self/maps",  # Used by rust panic handler setup and v8 setup
+    "/proc/self/cgroup",
+    "/proc/stat",
+```
+
+Most of these under `/sys` seem to be used by a transitive dependency of swc for the ts transform.
+
+```
+    "/sys/devices/system/cpu/online",
+    "/sys/devices/system/cpu/cpu0/tsc_freq_khz", # probably safe
+    "/sys/fs/cgroup/cgroup.controllers",
+    "/sys/fs/cgroup/cpu.max",
+```
+
+### (Resolved) Debugging rusty_v8 with full debug symbols for v8
+
+See: https://github.com/denoland/rusty_v8/issues/1750
+
+Delete target directory and cargo build with env:
+
+```
+V8_FROM_SOURCE=1 PRINT_GN_ARGS=1 GN_ARGS="line_tables_only=false no_inline_line_tables=false symbol_level=2"
+```
+
+### (Partially resolved) Backend VM memory exception: page_at: page directory not present
+
+Seems ok to allocate 70GB of address space to avoid this for now, will ultimately be fixed by more advanced memory accounting in tinykvm.
+
+Tracked down why here and follow ups: https://github.com/varnish/tinykvm/issues/23#issuecomment-2748807778
+
+* Would gdb `maintenance info sections` let us know what is causing memory to be paged in?
+
+    - Cannot use /proc/self/maps as that reflects the varnish process on the host.
 
 Only triggered after switching to `wait_for_requests_paused` which works in the rust demo.
 
