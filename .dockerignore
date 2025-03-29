@@ -1,2 +1,4 @@
 /target
 /.git
+.gdb_history
+*.log
