@@ -57,6 +57,9 @@ pub fn get_v8_flags_from_env() -> Vec<String> {
 }
 
 fn main() -> Result<(), AnyError> {
+    if std::env::var("BREAKPOINT_MAIN").is_ok() {
+        varnish::breakpoint();
+    }
     let mut v8_flags = vec![
         "UNUSED_BUT_NECESSARY_ARG0".to_string(),
         "--stack-size=1024".to_string(),
