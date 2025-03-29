@@ -13,9 +13,9 @@ sub vcl_init {
             "executable_heap": true,
             "verbose": true,
             "max_memory": 70000,
+            "main_arguments": ["/main.js"],
             "environment": [
-                "RUST_BACKTRACE=full",
-                "SCRIPT=/main.js"
+                "RUST_BACKTRACE=full"
             ],
             "allowed_paths": [
                 "/dev/urandom",

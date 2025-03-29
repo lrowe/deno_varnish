@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use deno_core::FsModuleLoader;
 use deno_core::ModuleSpecifier;
-use deno_core::error::AnyError;
+use deno_core::anyhow;
 use deno_core::op2;
 //use deno_core::OpState;
 use deno_core::v8;
@@ -56,10 +56,18 @@ pub fn get_v8_flags_from_env() -> Vec<String> {
         .unwrap_or_default()
 }
 
-fn main() -> Result<(), AnyError> {
+fn main() -> Result<(), anyhow::Error> {
     if std::env::var("BREAKPOINT_MAIN").is_ok() {
         varnish::breakpoint();
     }
+
+    let mut args = ::std::env::args_os();
+    let _executable = args.next().unwrap();
+    let _statefile = args.next().unwrap();
+    let programtype = args.next().unwrap();
+    assert_eq!(programtype, "request");
+    let script = args.next().unwrap();
+
     let mut v8_flags = vec![
         "UNUSED_BUT_NECESSARY_ARG0".to_string(),
         "--stack-size=1024".to_string(),
@@ -74,7 +82,6 @@ fn main() -> Result<(), AnyError> {
     }
     let v8_platform = v8::Platform::new_single_threaded(true).make_shared();
     deno_core::JsRuntime::init_platform(Some(v8_platform), false);
-    let script = std::env::var_os("SCRIPT").unwrap();
     let main_module = ModuleSpecifier::from_file_path(Path::new(&script)).unwrap();
     eprintln!("Running {main_module}...");
     let fs = Arc::new(RealFs);
@@ -113,7 +120,7 @@ fn main() -> Result<(), AnyError> {
         .block_on(async {
             worker.execute_main_module(&main_module).await?;
             worker.run_event_loop(false).await?;
-            Ok::<(), AnyError>(())
+            Ok::<(), anyhow::Error>(())
         })?;
     loop {
         eprintln!("before wait_for_requests_paused");

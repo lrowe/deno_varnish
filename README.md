@@ -14,7 +14,7 @@ By not using musl we avoid a lengthy v8 build and reuse the published glibc buil
 ```
 RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
 ldd ./target/x86_64-unknown-linux-gnu/release/deno-varnish # statically linked
-SCRIPT="$PWD/main.js" ./target/x86_64-unknown-linux-gnu/release/deno-varnish
+./target/x86_64-unknown-linux-gnu/release/deno-varnish state request ./main.js
 ```
 
 This produces the following output with the expected segmentation fault.
