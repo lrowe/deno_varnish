@@ -80,6 +80,7 @@ fn main() -> Result<(), anyhow::Error> {
     for flag in unrecognized.iter().skip(1) {
         eprintln!("Unrecognized v8 flag {flag}");
     }
+
     let v8_platform = v8::Platform::new_single_threaded(true).make_shared();
     deno_core::JsRuntime::init_platform(Some(v8_platform), false);
     let main_module = ModuleSpecifier::from_file_path(Path::new(&script)).unwrap();
@@ -88,6 +89,7 @@ fn main() -> Result<(), anyhow::Error> {
     let permission_desc_parser = Arc::new(RuntimePermissionDescriptorParser::new(
         sys_traits::impls::RealSys,
     ));
+
     let mut worker = MainWorker::bootstrap_from_options(
         &main_module,
         WorkerServiceOptions::<
@@ -114,6 +116,7 @@ fn main() -> Result<(), anyhow::Error> {
             ..Default::default()
         },
     );
+
     tokio::runtime::Builder::new_current_thread()
         .build()
         .unwrap()
@@ -122,6 +125,7 @@ fn main() -> Result<(), anyhow::Error> {
             worker.run_event_loop(false).await?;
             Ok::<(), anyhow::Error>(())
         })?;
+
     loop {
         eprintln!("before wait_for_requests_paused");
         let request = varnish::wait_for_requests_paused();
