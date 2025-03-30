@@ -13,6 +13,8 @@ sub vcl_init {
             "executable_heap": true,
             "verbose": true,
             "max_memory": 70000,
+            "req_mem_limit_after_reset": 2000,
+            "split_hugepages": true,
             "main_arguments": ["/main.js"],
             "environment": [
                 "RUST_BACKTRACE=full"
