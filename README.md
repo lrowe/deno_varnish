@@ -83,6 +83,16 @@ Slows things down. Can take a minute or so to hit a breakpoint that would otherw
 
 ## Issues and open questions
 
+### Understand why we are running out of memory in non-ephemeral mode
+
+Even after ensuring the RcHttpRecord is dropped we still run out of memory.
+
+Run with `"ephemeral": false` and repro with:
+
+```
+wrk -t 1 -c 1 http://127.0.0.1:8080/deno
+```
+
 ### Investigate glibc tunables
 
 If we do want hugepages we can configure malloc to use them.
