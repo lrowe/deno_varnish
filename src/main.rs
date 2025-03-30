@@ -59,9 +59,7 @@ impl HttpRecord {
 macro_rules! take_external {
   ($external:expr, $args:tt) => {{
     let ptr = ExternalPointer::<RcHttpRecord>::from_raw($external);
-    let record = ptr.unsafely_take().0;
-    http_trace!(record, $args);
-    record
+    ptr.unsafely_take().0
   }};
 }
 
@@ -74,8 +72,10 @@ macro_rules! clone_external {
 }
 
 #[op2(fast)]
-fn op_varnish_backend_response(status: u16, #[string] ctype: &str, #[arraybuffer] data: &[u8]) {
+fn op_varnish_backend_response(external: *const c_void, status: u16, #[string] ctype: &str, #[arraybuffer] data: &[u8]) {
     varnish::backend_response(status, ctype, data);
+    // SAFETY: JS does not use external after this.
+    unsafe { take_external!(external, "op_varnish_backend_response") };
 }
 
 #[op2(fast)]

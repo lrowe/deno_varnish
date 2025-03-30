@@ -14,7 +14,7 @@ const serve = async (handler) => {
     const response = await handler(request);
     const content_type = response.headers.get("Content-Type") ?? "application/octet-stream";
     const body = await response.arrayBuffer();
-    op_varnish_backend_response(response.status, content_type, body);
+    op_varnish_backend_response(external, response.status, content_type, body);
   }
 };
 
