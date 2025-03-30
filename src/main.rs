@@ -3,13 +3,18 @@
 #![allow(clippy::print_stdout)]
 #![allow(clippy::print_stderr)]
 
+use std::cell::Ref;
+use std::cell::RefCell;
 use std::path::Path;
+use std::ffi::c_void;
 use std::rc::Rc;
 use std::sync::Arc;
 
 use deno_core::FsModuleLoader;
 use deno_core::ModuleSpecifier;
 use deno_core::anyhow;
+use deno_core::external;
+use deno_core::ExternalPointer;
 use deno_core::op2;
 //use deno_core::OpState;
 use deno_core::v8;
@@ -26,23 +31,76 @@ use deno_runtime::worker::WorkerServiceOptions;
 #[allow(dead_code)]
 mod varnish;
 
+// This is likely overcomplicated but do same as Deno http serve for now.
+struct HttpRecordInner {
+    pub request: varnish::Request
+}
+
+struct HttpRecord(RefCell<Option<HttpRecordInner>>);
+
+#[repr(transparent)]
+struct RcHttpRecord(Rc<HttpRecord>);
+
+// Register the [`HttpRecord`] as an external.
+external!(RcHttpRecord, "varnish http record");
+
+impl HttpRecord {
+    fn self_ref(&self) -> Ref<'_, HttpRecordInner> {
+        Ref::map(self.0.borrow(), |option| option.as_ref().unwrap())
+    }
+    pub fn request(&self) -> Ref<'_, varnish::Request> {
+        Ref::map(self.self_ref(), |inner| &inner.request)
+    }
+}
+
+
+/// Construct Rc<HttpRecord> from raw external pointer, consuming
+/// refcount. You must make sure the external is deleted on the JS side.
+macro_rules! take_external {
+  ($external:expr, $args:tt) => {{
+    let ptr = ExternalPointer::<RcHttpRecord>::from_raw($external);
+    let record = ptr.unsafely_take().0;
+    http_trace!(record, $args);
+    record
+  }};
+}
+
+/// Clone Rc<HttpRecord> from raw external pointer.
+macro_rules! clone_external {
+  ($external:expr, $args:tt) => {{
+    let ptr = ExternalPointer::<RcHttpRecord>::from_raw($external);
+    ptr.unsafely_deref().0.clone()
+  }};
+}
+
 #[op2(fast)]
-fn op_varnish_backend_response_str(status: u16, #[string] ctype: &str, #[string] data: &str) {
-    varnish::backend_response_str(status, ctype, &data);
+fn op_varnish_backend_response(status: u16, #[string] ctype: &str, #[arraybuffer] data: &[u8]) {
+    varnish::backend_response(status, ctype, data);
 }
-/*
+
+#[op2(fast)]
+fn op_varnish_wait_for_requests_paused() -> *const c_void {
+    let request = varnish::wait_for_requests_paused();
+    let record = HttpRecord(RefCell::new(Some(HttpRecordInner { request })));
+    let ptr = ExternalPointer::new(RcHttpRecord(Rc::new(record)));
+    ptr.into_raw()
+}
+
 #[op2]
-fn op_varnish_set_backend_get(
-    state: &mut OpState,
-    #[global] callback: v8::Global<v8::Function>,
-) -> Result<(), deno_error::JsErrorBox> {
-    state.put(callback);
-    Ok(())
+#[string]
+fn op_varnish_request_url(external: *const c_void) -> String {
+    // SAFETY: op is called with external.
+    let http = unsafe { clone_external!(external, "op_varnish_request_url") };
+    http.request().url().to_string()
 }
-*/
+
 deno_runtime::deno_core::extension!(
     varnish_runtime,
-    ops = [op_varnish_backend_response_str],
+    ops = [
+        op_varnish_backend_response,
+        op_varnish_wait_for_requests_paused,
+        op_varnish_request_url,
+    ],
     esm_entry_point = "ext:varnish_runtime/bootstrap.js",
     esm = [dir "src", "bootstrap.js"]
 );
@@ -124,14 +182,5 @@ fn main() -> Result<(), anyhow::Error> {
             worker.execute_main_module(&main_module).await?;
             worker.run_event_loop(false).await?;
             Ok::<(), anyhow::Error>(())
-        })?;
-
-    loop {
-        eprintln!("before wait_for_requests_paused");
-        let request = varnish::wait_for_requests_paused();
-        eprintln!("after wait_for_requests_paused");
-        eprintln!("request {} {}", request.method(), request.url());
-        let data = format!("script did not finish {}", &request.url());
-        varnish::backend_response_str(500, "text/plain", data.as_str());
-    }
+        })
 }

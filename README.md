@@ -1,6 +1,6 @@
 # Experiment embedding deno_runtime in Varnish TinyKVM.
 
-This is very early in development and doesn't work yet.
+This is very early in development, it only kinda works and is quite slow (more than likely my fault!)
 
 ## Build static binary and validate that it runs on Linux
 
