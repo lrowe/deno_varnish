@@ -83,6 +83,12 @@ Slows things down. Can take a minute or so to hit a breakpoint that would otherw
 
 ## Issues and open questions
 
+### Investigate glibc tunables
+
+If we do want hugepages we can configure malloc to use them.
+
+    "GLIBC_TUNABLES=glibc.malloc.hugetlb=2:glibc.malloc.mmap_threshold=2097152"
+
 ### Why does updating rust dependencies break things
 
 Causes a check to fail in mutex.cc:75.
