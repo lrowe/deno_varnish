@@ -11,12 +11,12 @@ sub vcl_init {
         """{
             "filename": "/deno-varnish",
             "executable_heap": true,
-            "max_memory": 70000,
+            "address_space": 66000,
+            "max_memory": 3600,
             "environment": [
                 "DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64"
             ],
             "req_mem_limit_after_reset": 2000,
-            "split_hugepages": true,
             "main_arguments": ["/main.js"],
             "allowed_paths": [
                 "/dev/urandom",
@@ -27,17 +27,13 @@ sub vcl_init {
 
     tinykvm.configure("blockon",
         """{
-            "filename": "/blockon",
-            "req_mem_limit_after_reset": 2000,
-            "split_hugepages": true
+            "filename": "/blockon"
         }""");
     tinykvm.start("blockon");
 
     tinykvm.configure("onget",
         """{
-            "filename": "/onget",
-            "req_mem_limit_after_reset": 2000,
-            "split_hugepages": true
+            "filename": "/onget"
         }""");
     tinykvm.start("onget");
     return (ok);

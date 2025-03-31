@@ -144,9 +144,11 @@ Delete target directory and cargo build with env:
 V8_FROM_SOURCE=1 PRINT_GN_ARGS=1 GN_ARGS="line_tables_only=false no_inline_line_tables=false symbol_level=2"
 ```
 
-### (Partially resolved) Backend VM memory exception: page_at: page directory not present
+### (Resolved) Backend VM memory exception: page_at: page directory not present
 
-Seems ok to allocate 70GB of address space to avoid this for now, will ultimately be fixed by more advanced memory accounting in tinykvm.
+TinyKVM now lets us specify address_space separately from max_memory.
+
+Seems ok to allocate 70GB of address space to avoid this for now.
 
 Tracked down why here and follow ups: https://github.com/varnish/tinykvm/issues/23#issuecomment-2748807778
 
