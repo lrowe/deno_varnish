@@ -12,6 +12,9 @@ sub vcl_init {
             "filename": "/deno-varnish",
             "executable_heap": true,
             "max_memory": 70000,
+            "environment": [
+                "DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64"
+            ],
             "req_mem_limit_after_reset": 2000,
             "split_hugepages": true,
             "main_arguments": ["/main.js"],

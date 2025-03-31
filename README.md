@@ -83,7 +83,12 @@ Slows things down. Can take a minute or so to hit a breakpoint that would otherw
 
 ## Issues and open questions
 
-### Understand why we are running out of memory in non-ephemeral mode
+### (Resolved) Understand why we are running out of memory in non-ephemeral mode
+
+This is fixed by specifying memory limits for v8 in the environment:
+```
+"DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64"
+```
 
 Even after ensuring the RcHttpRecord is dropped we still run out of memory.
 
