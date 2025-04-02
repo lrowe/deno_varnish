@@ -1,6 +1,13 @@
 # Experiment embedding deno_runtime in Varnish TinyKVM.
 
-This is very early in development, it only kinda works and is quite slow (more than likely my fault!)
+This is very early in development, it only kinda works.
+
+Currently overhead is abot ~1ms which while not ideal is still faster than alternatives like process forking or isolates.
+
+Long run its not clear yet if this should be a custom wrapped runtime or just a Deno extension.
+
+* The deno_runtime crate is not yet stable which could make keeping this up to date tricky.
+* However customising v8 build settings could be useful.
 
 ## Build static binary and validate that it runs on Linux
 
