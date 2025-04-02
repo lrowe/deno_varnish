@@ -115,9 +115,9 @@ pub fn get_v8_flags_from_env() -> Vec<String> {
 }
 
 fn main() -> Result<(), anyhow::Error> {
-    if std::env::var("BREAKPOINT_MAIN").is_ok() {
-        varnish::breakpoint();
-    }
+    //if std::env::var("BREAKPOINT_MAIN").is_ok() {
+    //    varnish::breakpoint();
+    //}
 
     let mut args = ::std::env::args_os();
     let _executable = args.next().unwrap();
@@ -147,7 +147,10 @@ fn main() -> Result<(), anyhow::Error> {
     let permission_desc_parser = Arc::new(RuntimePermissionDescriptorParser::new(
         sys_traits::impls::RealSys,
     ));
-
+    eprintln!("Before bootstrap_from_options");
+    if std::env::var("BREAKPOINT_MAIN").is_ok() {
+        varnish::breakpoint();
+    }
     let mut worker = MainWorker::bootstrap_from_options(
         &main_module,
         WorkerServiceOptions::<
@@ -179,7 +182,9 @@ fn main() -> Result<(), anyhow::Error> {
         .build()
         .unwrap()
         .block_on(async {
+            eprintln!("Before execute_main_module");
             worker.execute_main_module(&main_module).await?;
+            eprintln!("Before run_event_loop");
             worker.run_event_loop(false).await?;
             Ok::<(), anyhow::Error>(())
         })
