@@ -14,7 +14,7 @@ By not using musl we avoid a lengthy v8 build and reuse the published glibc buil
 ```
 RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
 ldd ./target/x86_64-unknown-linux-gnu/release/deno-varnish # statically linked
-./target/x86_64-unknown-linux-gnu/release/deno-varnish state request ./main.js
+./target/x86_64-unknown-linux-gnu/release/deno-varnish state request $PWD/main.js
 ```
 
 This produces the following output with the expected segmentation fault.
@@ -69,7 +69,7 @@ Then run concurrently:
 
 * Configure  with `"allow_debug": true`. Watch the connection timeout along with timeouts from `"max_boot_time"` and `"max_request_time"`.
 
-    > Allow remotely debugging requests with GDB. The request to be debugged has to cause a breakpoint. In the C API this is done with `sys_breakpoint()`. The GDB instance must load the program using `file myprogram` before it can remotely connect using target `remote :2159`.
+    > Allow remotely debugging requests with GDB. The request to be debugged has to cause a breakpoint. In the C API this is done with `sys_breakpoint()`. The GDB instance must load the program using `file myprogram` before it can remotely connect using `target remote :2159`.
 
     [JSON Glossary](https://github.com/varnish/libvmod-tinykvm/blob/main/docs/glossary.md)
 
@@ -141,7 +141,7 @@ See: https://github.com/denoland/rusty_v8/issues/1750
 Delete target directory and cargo build with env:
 
 ```
-V8_FROM_SOURCE=1 PRINT_GN_ARGS=1 GN_ARGS="line_tables_only=false no_inline_line_tables=false symbol_level=2"
+V8_FROM_SOURCE=1 V8_FORCE_DEBUG=1 PRINT_GN_ARGS=1 GN_ARGS="line_tables_only=false no_inline_line_tables=false symbol_level=2"
 ```
 
 ### (Resolved) Backend VM memory exception: page_at: page directory not present
