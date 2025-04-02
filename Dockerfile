@@ -12,7 +12,7 @@ RUN set -e; \
 RUN set -e; \
     git init; \
     git remote add origin https://github.com/varnish/libvmod-tinykvm.git; \
-    git fetch --depth 1 origin c9945af3db94698e7cd5031e222befc7e883b7c2; \
+    git fetch --depth 1 origin ec8fcedd6db3988614aab068d5700b8ffbc2f0d4; \
     git checkout FETCH_HEAD; \
     git submodule update --init --recursive;
 RUN set -e; \
