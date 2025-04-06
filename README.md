@@ -54,7 +54,7 @@ Run with `wrk -t1 -c1 -d10s --latency`.
 | main.js ephemeral=false | 72us | 66us | 256us |
 | rust ephemeral=true | 78us | 76us | 110us |
 | rust ephemeral=false | 59us | 58us | 85us |
-| synth | 31us | 29us | 
+| synth | 30us | 29us | 40us |
 | deno --allow-net main.js | 16us | 15us | 23us |
 
 * Varnish outputs more headers by default which makes a noticable difference for hello world timings.
