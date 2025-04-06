@@ -2,9 +2,9 @@
 
 This is very early in development, it only kinda works.
 
-Currently overhead when running with per request isolation is about ~1ms for trivial programs which while not ideal is still faster than alternatives like process forking or isolates.
-
-However for non trivial programs it seems much higher and probably similar to using an isolate.
+Currently overhead when running with per request isolation is about ~0.7ms for trivial programs and ~1.5ms for a react server rendering benchmark.
+While higher than for smaller executables in TinyKVM, it is less than half that of using a V8 isolate or process forking.
+That likely makes this the fastest JS runtime with per request isolation for substantial programs. (WebAssembly can be faster for trivial ones.)
 
 Long run its not clear yet if this should be a custom wrapped runtime or just a Deno extension.
 
@@ -29,7 +29,7 @@ Run with `wrk -t1 -c1 -d10s --latency`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| renderer.js ephemeral=true | 4.19ms | 4.09ms | 4.85ms |
+| renderer.js ephemeral=true | 2.30ms | 2.25ms | 3.59ms |
 | renderer.js ephemeral=false | 1.93ms | 1.09ms | 13.93ms |
 | deno --allow-net renderer.js | 584us | 569us | 746us |
 
@@ -39,7 +39,7 @@ Run with `wrk -t1 -c1 -d10s --latency`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| output.js ephemeral=true | 1.18ms | 1.16ms | 1.44ms |
+| output.js ephemeral=true | 757us | 720us | 1.46ms |
 | output.js ephemeral=false | 96us | 89us | 292us |
 | output.rs ephemeral=true | 79us | 79us | 112us |
 | output.rs ephemeral=false | 70us | 67us | 116us |
@@ -50,7 +50,7 @@ Run with `wrk -t1 -c1 -d10s --latency`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| main.js ephemeral=true | 1.13ms | 1.11ms | 1.29ms |
+| main.js ephemeral=true | 791us | 767us | 1.00ms |
 | main.js ephemeral=false | 72us | 66us | 256us |
 | rust ephemeral=true | 78us | 76us | 110us |
 | rust ephemeral=false | 59us | 58us | 85us |
@@ -139,7 +139,7 @@ Then run concurrently:
 
 #### Debugging through JS stackframes
 
-Add `--gdbjit_full` to v8 flags. ``--gdbjit` doesn't really do anything. No need to rebuild.
+Add `--gdbjit_full` to v8 flags. `--gdbjit` doesn't really do anything. No need to rebuild.
 
 Slows things down. Can take a minute or so to hit a breakpoint that would otherwise be instantaneous.
 
