@@ -4,4 +4,4 @@ const handler = (request) => {
   return new Response(`Hello from JS ${request.url}`);
 };
 
-varnish.serve(handler);
+(globalThis.varnish?.serve ?? Deno.serve)(handler);

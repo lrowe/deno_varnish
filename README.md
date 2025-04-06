@@ -2,12 +2,66 @@
 
 This is very early in development, it only kinda works.
 
-Currently overhead is abot ~1ms which while not ideal is still faster than alternatives like process forking or isolates.
+Currently overhead when running with per request isolation is about ~1ms for trivial programs which while not ideal is still faster than alternatives like process forking or isolates.
+
+However for non trivial programs it seems much higher and probably similar to using an isolate.
 
 Long run its not clear yet if this should be a custom wrapped runtime or just a Deno extension.
 
 * The deno_runtime crate is not yet stable which could make keeping this up to date tricky.
 * However customising v8 build settings could be useful.
+* And might need to be custom to make upstream requests using fetch work.
+
+## To do
+
+* Add support for basic http serving using httparse to provide a better comparison running outside of TinyKVM.
+  (V8 will run GC on a background thread by default so it would be helpful to have a single threaded comparator.)
+* Build/find a comparator for v8 isolates and forking.
+* Work out how to do perf recording when running in TinyKVM.
+* Support headers, streaming, etc.
+* Make backend requests work.
+
+## Basic benchmarks
+
+Run with `wrk -t1 -c1 -d10s --latency`.
+
+### Render about 30KB of HTML with React
+
+| Configuration | Mean | 50% | 99% |
+|---------------|------|-----|-----|
+| renderer.js ephemeral=true | 4.19ms | 4.09ms | 4.85ms |
+| renderer.js ephemeral=false | 1.93ms | 1.09ms | 13.93ms |
+| deno --allow-net renderer.js | 584us | 569us | 746us |
+
+* I guess the high variability for `ephemeral=false` is a result of single threaded GC.
+
+### Just return the prerendered html
+
+| Configuration | Mean | 50% | 99% |
+|---------------|------|-----|-----|
+| output.js ephemeral=true | 1.18ms | 1.16ms | 1.44ms |
+| output.js ephemeral=false | 96us | 89us | 292us |
+| output.rs ephemeral=true | 79us | 79us | 112us |
+| output.rs ephemeral=false | 70us | 67us | 116us |
+| output.synth | 39us | 39us | 59us |
+| deno --allow-net --allow-read output.js | 44us | 44us | 58us |
+
+### Hello world
+
+| Configuration | Mean | 50% | 99% |
+|---------------|------|-----|-----|
+| main.js ephemeral=false | 290us | 67us | 443us |
+| rust ephemeral=true | 78us | 76us | 110us |
+| rust ephemeral=false | 59us | 58us | 85us |
+| synth | 31us | 29us | 
+| deno --allow-net main.js | 16us | 15us | 23us |
+
+* Varnish outputs more headers by default which makes a noticable difference for hello world timings.
+
+> [!NOTE]
+> The deno runs measured here did not have the same `DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64`.
+> But this makes little difference since GC runs in a background thread.
+
 
 ## Build static binary and validate that it runs on Linux
 

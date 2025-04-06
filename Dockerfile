@@ -48,9 +48,13 @@ RUN set -e; \
     apt-get -y install $VMOD_RUN_DEPS; \
     rm -rf /var/lib/apt/lists/*;
 COPY --from=build_vmod /libvmod-tinykvm/.build/libvmod_*.so /usr/lib/varnish/vmods/
-COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/deno-varnish /deno-varnish
-COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/blockon /blockon
-COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/onget /onget
-COPY main.js /main.js
+COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/deno-varnish /
+COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/blockon /
+COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/onget /
+COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/output /
 COPY default.vcl /etc/varnish/default.vcl
+COPY main.js /
+COPY output.js /
+COPY output.html /
+COPY renderer.js /
 USER varnish
