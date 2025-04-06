@@ -50,7 +50,8 @@ Run with `wrk -t1 -c1 -d10s --latency`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| main.js ephemeral=false | 290us | 67us | 443us |
+| main.js ephemeral=true | 1.13ms | 1.11ms | 1.29ms |
+| main.js ephemeral=false | 72us | 66us | 256us |
 | rust ephemeral=true | 78us | 76us | 110us |
 | rust ephemeral=false | 59us | 58us | 85us |
 | synth | 31us | 29us | 
