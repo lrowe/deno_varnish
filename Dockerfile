@@ -1,4 +1,4 @@
-FROM varnish:7.6.1 AS varnish
+FROM varnish:7.7.0 AS varnish
 
 FROM varnish AS build_vmod
 ENV VMOD_BUILD_DEPS="libcurl4-openssl-dev libpcre3-dev libarchive-dev libjemalloc-dev git cmake build-essential"
@@ -12,7 +12,7 @@ RUN set -e; \
 RUN set -e; \
     git init; \
     git remote add origin https://github.com/varnish/libvmod-tinykvm.git; \
-    git fetch --depth 1 origin 91e054bd2a376a21d21ec9ccb00844502b7ba364; \
+    git fetch --depth 1 origin 23f88dca9327ea778d9b572b674da22bc9e9da0e; \
     git checkout FETCH_HEAD; \
     git submodule update --init --recursive;
 RUN set -e; \
