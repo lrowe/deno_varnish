@@ -2,7 +2,7 @@
 
 This is very early in development, it only kinda works.
 
-Currently overhead when running with per request isolation is about ~0.7ms for trivial programs and ~1.5ms for a react server rendering benchmark.
+Currently overhead when running with per request isolation is about ~0.7ms for trivial programs and ~1ms for a react server rendering benchmark.
 While higher than for smaller executables in TinyKVM, it is less than half that of using a V8 isolate or process forking.
 That likely makes this the fastest JS runtime with per request isolation for substantial programs. (WebAssembly can be faster for trivial ones.)
 
@@ -25,11 +25,13 @@ Long run its not clear yet if this should be a custom wrapped runtime or just a 
 
 Run with `wrk -t1 -c1 -d10s --latency`.
 
+When running `ephemeral=false` specify `DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64` but not when `ephemeral=true`.
+
 ### Render about 30KB of HTML with React
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| renderer.js ephemeral=true | 2.30ms | 2.25ms | 3.59ms |
+| renderer.js ephemeral=true | 1.96ms | 1.69ms | 3.16ms |
 | renderer.js ephemeral=false | 1.93ms | 1.09ms | 13.93ms |
 | deno --allow-net renderer.js | 584us | 569us | 746us |
 
@@ -63,6 +65,29 @@ Run with `wrk -t1 -c1 -d10s --latency`.
 > The deno runs measured here did not have the same `DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64`.
 > But this makes little difference since GC runs in a background thread.
 
+## Investigating V8 runtime flags
+
+### `--max-heap-size=64,--max-old-space-size=64`
+
+* Slows down `ephemeral=true`.
+
+* Avoids errors when 
+
+### `--max-old-space-size=64,--max-semi-space-size=64`
+
+* Doesn't seem to make a difference to `ephemeral=true` performance.
+
+* Still a handful of errors with `ephemeral=false`.
+
+## Investigating V8 build options
+
+Build with `GN_ARGS="..."`
+
+### `cppgc_enable_caged_heap=false`
+
+* Runs well with `"address_space": 8000` instead of `66000`. 1.62ms median.
+
+* Also runs with `"address_space": 4000` but then performance is much worse at 4ms median.
 
 ## Build static binary and validate that it runs on Linux
 

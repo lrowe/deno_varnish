@@ -17,9 +17,7 @@ sub vcl_init {
             "req_mem_limit_after_reset": 2000,
             "ephemeral": true,
             "experimental_keep_working_memory": true,
-            "environment": [
-                "DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64"
-            ],
+            "environment": [],
             "main_arguments": ["/main.js"],
             "allowed_paths": [
                 "/dev/urandom",
@@ -37,9 +35,7 @@ sub vcl_init {
             "req_mem_limit_after_reset": 2000,
             "ephemeral": true,
             "experimental_keep_working_memory": true,
-            "environment": [
-                "DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64"
-            ],
+            "environment": [],
             "main_arguments": ["/renderer.js"],
             "allowed_paths": [
                 "/dev/urandom",
@@ -57,9 +53,7 @@ sub vcl_init {
             "req_mem_limit_after_reset": 2000,
             "ephemeral": true,
             "experimental_keep_working_memory": true,
-            "environment": [
-                "DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64"
-            ],
+            "environment": [],
             "main_arguments": ["/output.js"],
             "allowed_paths": [
                 "/dev/urandom",
