@@ -2,9 +2,8 @@
 
 This is very early in development, it only kinda works.
 
-Currently overhead when running with per request isolation is about ~0.7ms for trivial programs and ~1ms for a react server rendering benchmark.
-While higher than for smaller executables in TinyKVM, it is less than half that of using a V8 isolate or process forking.
-That likely makes this the fastest JS runtime with per request isolation for substantial programs. (WebAssembly can be faster for trivial ones.)
+Currently overhead when running with per request isolation is about ~0.1ms for trivial programs and ~0.4ms for a react server rendering benchmark.
+This is an order a magnitude less than using a V8 isolate or process forking which likely makes this the fastest JS runtime with per request isolation for substantial programs. (WebAssembly can be faster for trivial ones.)
 
 Long run its not clear yet if this should be a custom wrapped runtime or just a Deno extension.
 
