@@ -9,6 +9,7 @@ use std::path::Path;
 use std::ffi::c_void;
 use std::rc::Rc;
 use std::sync::Arc;
+use std::time::Instant;
 
 use deno_core::FsModuleLoader;
 use deno_core::ModuleSpecifier;
@@ -33,7 +34,8 @@ mod varnish;
 
 // This is likely overcomplicated but do same as Deno http serve for now.
 struct HttpRecordInner {
-    pub request: varnish::Request
+    pub request: varnish::Request,
+    pub start: Instant,
 }
 
 struct HttpRecord(RefCell<Option<HttpRecordInner>>);
@@ -73,15 +75,18 @@ macro_rules! clone_external {
 
 #[op2(fast)]
 fn op_varnish_backend_response(external: *const c_void, status: u16, #[string] ctype: &str, #[arraybuffer] data: &[u8]) {
-    varnish::backend_response(status, ctype, data);
     // SAFETY: JS does not use external after this.
-    unsafe { take_external!(external, "op_varnish_backend_response") };
+    let http = unsafe { take_external!(external, "op_varnish_backend_response") };
+    let us = http.0.take().unwrap().start.elapsed().as_micros();
+    eprintln!("{}", format!("deno request time {us} us"));
+    varnish::backend_response(status, ctype, data);
 }
 
 #[op2(fast)]
 fn op_varnish_wait_for_requests_paused() -> *const c_void {
     let request = varnish::wait_for_requests_paused();
-    let record = HttpRecord(RefCell::new(Some(HttpRecordInner { request })));
+    let start = Instant::now();
+    let record = HttpRecord(RefCell::new(Some(HttpRecordInner { request, start })));
     let ptr = ExternalPointer::new(RcHttpRecord(Rc::new(record)));
     ptr.into_raw()
 }
@@ -136,13 +141,13 @@ fn main() -> Result<(), anyhow::Error> {
     v8_flags.extend(get_v8_flags_from_env());
     let unrecognized = v8_set_flags(v8_flags);
     for flag in unrecognized.iter().skip(1) {
-        eprintln!("Unrecognized v8 flag {flag}");
+        eprintln!("{}", format!("Unrecognized v8 flag {flag}"));
     }
 
     let v8_platform = v8::Platform::new_single_threaded(true).make_shared();
     deno_core::JsRuntime::init_platform(Some(v8_platform), false);
     let main_module = ModuleSpecifier::from_file_path(Path::new(&script)).unwrap();
-    eprintln!("Running {main_module}...");
+    eprintln!("{}", format!("Running {main_module}..."));
     let fs = Arc::new(RealFs);
     let permission_desc_parser = Arc::new(RuntimePermissionDescriptorParser::new(
         sys_traits::impls::RealSys,
