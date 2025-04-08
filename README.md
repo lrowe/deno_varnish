@@ -71,7 +71,7 @@ When running `ephemeral=false` specify `DENO_V8_FLAGS=--max-heap-size=64,--max-o
 
 * Slows down `ephemeral=true`.
 
-* Avoids errors when 
+* Avoids errors when running with `ephemeral=false`.
 
 ### `--max-old-space-size=64,--max-semi-space-size=64`
 
