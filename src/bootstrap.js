@@ -6,9 +6,12 @@ import {
 } from "ext:core/ops";
 
 // TODO: (Request) -> Response like Deno.serve
-const serve = async (handler) => {
+const serve = async (opts_, handler_) => {
+  const handler = typeof handler_ === 'function' ? handler_ : typeof opts_ === 'function' ? opts_ : opts_?.handler;
+  const opts = typeof opts_ === 'object' ? opts_ : null;
+  let warmups = opts?.warmups ?? 0;
   while (true) {
-    const external = op_varnish_wait_for_requests_paused();
+    const external = op_varnish_wait_for_requests_paused(warmups && warmups--);
     const url = op_varnish_request_url(external);
     const request = new Request(new URL(url, "http://localhost:8080"));
     const response = await handler(request);

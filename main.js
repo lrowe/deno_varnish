@@ -1,14 +1,7 @@
-console.log("Hello from deno_varnish");
+const body = "Hello, World!";
 
 const handler = () => {
-  return new Response("Hello, World!");
+  return new Response(body);
 };
 
-// Pre-warm
-for (let i = 0; i < 50; i++) {
-  console.time("handler");
-  handler();
-  console.timeEnd("handler");
-}
-
-(globalThis.varnish?.serve ?? Deno.serve)(handler);
+(globalThis.varnish?.serve ?? Deno.serve)({ warmups: 100 }, handler);

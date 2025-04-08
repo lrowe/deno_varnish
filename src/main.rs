@@ -47,6 +47,9 @@ struct RcHttpRecord(Rc<HttpRecord>);
 external!(RcHttpRecord, "varnish http record");
 
 impl HttpRecord {
+    fn is_warmup(&self) -> bool {
+        self.0.borrow().is_none()
+    }
     fn self_ref(&self) -> Ref<'_, HttpRecordInner> {
         Ref::map(self.0.borrow(), |option| option.as_ref().unwrap())
     }
@@ -77,17 +80,24 @@ macro_rules! clone_external {
 fn op_varnish_backend_response(external: *const c_void, status: u16, #[string] ctype: &str, #[arraybuffer] data: &[u8]) {
     // SAFETY: JS does not use external after this.
     let http = unsafe { take_external!(external, "op_varnish_backend_response") };
+    if http.is_warmup() {
+        return;
+    }
     let us = http.0.take().unwrap().start.elapsed().as_micros();
     eprintln!("{}", format!("deno request time {us} us"));
     varnish::backend_response(status, ctype, data);
 }
 
 #[op2(fast)]
-fn op_varnish_wait_for_requests_paused() -> *const c_void {
-    let request = varnish::wait_for_requests_paused();
-    let start = Instant::now();
-    let record = HttpRecord(RefCell::new(Some(HttpRecordInner { request, start })));
-    let ptr = ExternalPointer::new(RcHttpRecord(Rc::new(record)));
+fn op_varnish_wait_for_requests_paused(warmups: i32) -> *const c_void {
+    let inner = if warmups > 0 {
+        None
+    } else {
+        let request = varnish::wait_for_requests_paused();
+        let start = Instant::now();
+        Some(HttpRecordInner { request, start })
+    };
+    let ptr = ExternalPointer::new(RcHttpRecord(Rc::new(HttpRecord(RefCell::new(inner)))));
     ptr.into_raw()
 }
 
@@ -96,6 +106,9 @@ fn op_varnish_wait_for_requests_paused() -> *const c_void {
 fn op_varnish_request_url(external: *const c_void) -> String {
     // SAFETY: op is called with external.
     let http = unsafe { clone_external!(external, "op_varnish_request_url") };
+    if http.is_warmup() {
+        return String::from("/");
+    }
     http.request().url().to_string()
 }
 

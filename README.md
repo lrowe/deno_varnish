@@ -25,15 +25,15 @@ Long run its not clear yet if this should be a custom wrapped runtime or just a 
 
 Run with `wrk -t1 -c1 -d10s --latency`.
 
-When running `ephemeral=false` specify `DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64` but not when `ephemeral=true`.
+All runs use `DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64`.
 
 ### Render about 30KB of HTML with React
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| renderer.js ephemeral=true | 1.96ms | 1.69ms | 3.16ms |
-| renderer.js ephemeral=false | 1.93ms | 1.09ms | 13.93ms |
-| deno --allow-net renderer.js | 584us | 569us | 746us |
+| renderer.js ephemeral=true | 1.01ms | 950us | 1.77ms |
+| renderer.js ephemeral=false | 950us | 715us | 5.86ms |
+| deno --allow-net renderer.js | 582us | 571us | 689us |
 
 * I guess the high variability for `ephemeral=false` is a result of single threaded GC.
 
@@ -41,29 +41,25 @@ When running `ephemeral=false` specify `DENO_V8_FLAGS=--max-heap-size=64,--max-o
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| output.js ephemeral=true | 757us | 720us | 1.46ms |
-| output.js ephemeral=false | 96us | 89us | 292us |
+| output.js ephemeral=true | 158us | 156us | 249us |
+| output.js ephemeral=false | 187us | 109us | 2.02ms |
 | output.rs ephemeral=true | 79us | 79us | 112us |
 | output.rs ephemeral=false | 70us | 67us | 116us |
 | output.synth | 39us | 39us | 59us |
-| deno --allow-net --allow-read output.js | 44us | 44us | 58us |
+| deno --allow-net --allow-read output.js | 45us | 44us | 67us |
 
 ### Hello world
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| main.js ephemeral=true | 791us | 767us | 1.00ms |
-| main.js ephemeral=false | 72us | 66us | 256us |
+| main.js ephemeral=true | 247us | 244us | 335us |
+| main.js ephemeral=false | 106us | 79us | 1.04ms |
 | rust ephemeral=true | 78us | 76us | 110us |
 | rust ephemeral=false | 59us | 58us | 85us |
 | synth | 30us | 29us | 40us |
-| deno --allow-net main.js | 16us | 15us | 23us |
+| deno --allow-net main.js | 15us | 15us | 20us |
 
 * Varnish outputs more headers by default which makes a noticable difference for hello world timings.
-
-> [!NOTE]
-> The deno runs measured here did not have the same `DENO_V8_FLAGS=--max-heap-size=64,--max-old-space-size=64`.
-> But this makes little difference since GC runs in a background thread.
 
 ## Investigating V8 runtime flags
 
@@ -71,7 +67,7 @@ When running `ephemeral=false` specify `DENO_V8_FLAGS=--max-heap-size=64,--max-o
 
 * Slows down `ephemeral=true`.
 
-* Avoids errors when running with `ephemeral=false`.
+* Still a handful of errors with `ephemeral=false`. (This is new, need to track down.)
 
 ### `--max-old-space-size=64,--max-semi-space-size=64`
 
@@ -169,6 +165,10 @@ Add `--gdbjit_full` to v8 flags. `--gdbjit` doesn't really do anything. No need 
 Slows things down. Can take a minute or so to hit a breakpoint that would otherwise be instantaneous.
 
 ## Issues and open questions
+
+### Why are we now seeing errors for ephemeral=false?
+
+### Why is main.js so much slower than output.js?
 
 ### (Resolved) Understand why we are running out of memory in non-ephemeral mode
 
