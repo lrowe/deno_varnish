@@ -30,7 +30,7 @@ All runs use `DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| renderer.js ephemeral=true | 1.01ms | 950us | 1.77ms |
+| renderer.js ephemeral=true | 1.01ms | 940us | 1.83ms |
 | renderer.js ephemeral=false | 950us | 715us | 5.86ms |
 | deno --allow-net renderer.js | 582us | 571us | 689us |
 
@@ -40,7 +40,7 @@ All runs use `DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| output.js ephemeral=true | 158us | 156us | 249us |
+| output.js ephemeral=true | 141us | 136us | 247us |
 | output.js ephemeral=false | 187us | 109us | 2.02ms |
 | output.rs ephemeral=true | 79us | 79us | 112us |
 | output.rs ephemeral=false | 70us | 67us | 116us |
@@ -51,7 +51,7 @@ All runs use `DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| main.js ephemeral=true | 247us | 244us | 335us |
+| main.js ephemeral=true | 228us | 226us | 343us |
 | main.js ephemeral=false | 106us | 79us | 1.04ms |
 | rust ephemeral=true | 78us | 76us | 110us |
 | rust ephemeral=false | 59us | 58us | 85us |
