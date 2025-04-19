@@ -21,7 +21,7 @@ RUN set -e; \
     cmake .. -DCMAKE_BUILD_TYPE=Release -DVARNISH_PLUS=OFF; \
     cmake --build . -j6;
 
-FROM rust:1.85-slim-bookworm AS build_rust
+FROM rust:1.86-slim-bookworm AS build_rust
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get -y install curl libclang-dev build-essential && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 # Do not put rustflags in .cargo/config.toml as that causes build error:
