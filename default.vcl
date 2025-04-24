@@ -22,6 +22,11 @@ sub vcl_init {
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
             "main_arguments": ["/main.js"],
             "allowed_paths": [
+                "/lib/x86_64-linux-gnu/libz.so.1",
+                "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+                "/lib/x86_64-linux-gnu/libm.so.6",
+                "/lib/x86_64-linux-gnu/libc.so.6",
+                "/lib64/ld-linux-x86-64.so.2",
                 "/dev/urandom",
                 "/main.js"
             ]
@@ -42,6 +47,11 @@ sub vcl_init {
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
             "main_arguments": ["/renderer.js"],
             "allowed_paths": [
+                "/lib/x86_64-linux-gnu/libz.so.1",
+                "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+                "/lib/x86_64-linux-gnu/libm.so.6",
+                "/lib/x86_64-linux-gnu/libc.so.6",
+                "/lib64/ld-linux-x86-64.so.2",
                 "/dev/urandom",
                 "/renderer.js"
             ]
@@ -62,6 +72,11 @@ sub vcl_init {
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
             "main_arguments": ["/output.js"],
             "allowed_paths": [
+                "/lib/x86_64-linux-gnu/libz.so.1",
+                "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+                "/lib/x86_64-linux-gnu/libm.so.6",
+                "/lib/x86_64-linux-gnu/libc.so.6",
+                "/lib64/ld-linux-x86-64.so.2",
                 "/dev/urandom",
                 "/output.html",
                 "/output.js"
@@ -69,13 +84,43 @@ sub vcl_init {
         }""");
     tinykvm.start("output.js");
 
-    tinykvm.configure("blockon", """{ "ephemeral": false, "filename": "/blockon" }""");
+    tinykvm.configure("blockon",
+        """{
+            "filename": "/blockon",
+            "ephemeral": true,
+            "executable_heap": true,
+            "allowed_paths": [
+                "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+                "/lib/x86_64-linux-gnu/libc.so.6",
+                "/lib64/ld-linux-x86-64.so.2"
+            ]
+        }""");
     tinykvm.start("blockon");
 
-    tinykvm.configure("onget", """{ "ephemeral": false, "filename": "/onget" }""");
+    tinykvm.configure("onget",
+        """{
+            "filename": "/onget",
+            "ephemeral": true,
+            "executable_heap": true,
+            "allowed_paths": [
+                "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+                "/lib/x86_64-linux-gnu/libc.so.6",
+                "/lib64/ld-linux-x86-64.so.2"
+            ]
+        }""");
     tinykvm.start("onget");
 
-    tinykvm.configure("output.rs", """{ "ephemeral": false, "filename": "/output" }""");
+    tinykvm.configure("output.rs",
+        """{
+            "filename": "/output",
+            "ephemeral": true,
+            "executable_heap": true,
+            "allowed_paths": [
+                "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+                "/lib/x86_64-linux-gnu/libc.so.6",
+                "/lib64/ld-linux-x86-64.so.2"
+            ]
+        }""");
     tinykvm.start("output.rs");
 
     return (ok);
