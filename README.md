@@ -30,8 +30,9 @@ All runs use `DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| renderer.js ephemeral=true | 1.01ms | 940us | 1.83ms |
-| renderer.js ephemeral=false | 950us | 715us | 5.86ms |
+| renderer.js ephemeral=true dynamic | 1.08ms | 990us | 1.93ms |
+| renderer.js ephemeral=true static | 0.98ms | 920us | 1.74ms |
+| renderer.js ephemeral=false static | 950us | 715us | 5.86ms |
 | deno --allow-net renderer.js | 582us | 571us | 689us |
 
 * I guess the high variability for `ephemeral=false` is a result of single threaded GC.
@@ -40,10 +41,12 @@ All runs use `DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| output.js ephemeral=true | 141us | 136us | 247us |
-| output.js ephemeral=false | 187us | 109us | 2.02ms |
-| output.rs ephemeral=true | 79us | 79us | 112us |
-| output.rs ephemeral=false | 70us | 67us | 116us |
+| output.js ephemeral=true dynamic | 240us | 161us | 370us |
+| output.js ephemeral=true static | 146us | 145us | 245us |
+| output.js ephemeral=false static | 187us | 109us | 2.02ms |
+| output.rs ephemeral=true dynamic | 78us | 76us | 124us |
+| output.rs ephemeral=true static | 75us | 73us | 121us |
+| output.rs ephemeral=false static | 70us | 67us | 116us |
 | output.synth | 39us | 39us | 59us |
 | deno --allow-net --allow-read output.js | 45us | 44us | 67us |
 
@@ -51,9 +54,11 @@ All runs use `DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64`.
 
 | Configuration | Mean | 50% | 99% |
 |---------------|------|-----|-----|
-| main.js ephemeral=true | 228us | 226us | 343us |
+| main.js ephemeral=true dynamic | 236us | 233us | 370us |
+| main.js ephemeral=true static | 234us | 232us | 303us |
 | main.js ephemeral=false | 106us | 79us | 1.04ms |
-| rust ephemeral=true | 78us | 76us | 110us |
+| rust ephemeral=true dynamic | 93us | 82us | 134us |
+| rust ephemeral=true static | 82us | 82us | 106us |
 | rust ephemeral=false | 59us | 58us | 85us |
 | synth | 30us | 29us | 40us |
 | deno --allow-net main.js | 15us | 15us | 20us |
