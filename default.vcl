@@ -37,7 +37,7 @@ sub vcl_init {
             "filename": "/deno-varnish",
             "executable_heap": true,
             "address_space": 66000,
-            "max_memory": 2800,
+            "max_memory": 3000,
             "hugepage_arena_size": 64,
             "request_hugepage_arena_size": 32,
             "ephemeral": true,
