@@ -4,14 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-deno_core = "0.340.0"
-deno_resolver = "0.26.0"
-deno_runtime = { version = "0.203.0", features = ["transpile"] }
-tokio = { version = "1.44.1", features = ["rt"] }
-sys_traits = "0.1.8"
+deno_core = "0.343.0"
+deno_resolver = "0.33.0"
+deno_runtime = { version = "0.210.0", features = ["transpile"] }
+tokio = { version = "1.44.2", features = ["rt"] }
+sys_traits = "0.1.9"
 
 [dev-dependencies]
-deno_bench_util = "0.189.0"
+deno_bench_util = "0.196.0"
 
 [[bench]]
 name = "invoke_op"
