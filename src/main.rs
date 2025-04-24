@@ -137,12 +137,9 @@ fn main() -> Result<(), anyhow::Error> {
         varnish::breakpoint();
     }
 
+    // Just use last argument as script until TinyKVM transition to env vars is complete.
     let mut args = ::std::env::args_os();
-    let _executable = args.next().unwrap();
-    let _statefile = args.next().unwrap();
-    let programtype = args.next().unwrap();
-    assert_eq!(programtype, "request");
-    let script = args.next().unwrap();
+    let script = args.next_back().unwrap();
 
     let mut v8_flags = vec![
         "UNUSED_BUT_NECESSARY_ARG0".to_string(),
