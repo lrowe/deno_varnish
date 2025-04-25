@@ -2,6 +2,8 @@
 name = "deno-varnish"
 version = "0.1.0"
 edition = "2024"
+authors = ["Laurence Rowe"]
+license = "MIT"
 
 [dependencies]
 deno_core = "0.343.0"
