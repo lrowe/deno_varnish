@@ -17,7 +17,6 @@ sub vcl_init {
             "hugepage_arena_size": 64,
             "request_hugepage_arena_size": 32,
             "ephemeral": true,
-            "ephemeral_keep_working_memory": true,
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
             "main_arguments": ["/main.js"],
             "allowed_paths": [
@@ -41,7 +40,6 @@ sub vcl_init {
             "hugepage_arena_size": 64,
             "request_hugepage_arena_size": 32,
             "ephemeral": true,
-            "ephemeral_keep_working_memory": true,
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
             "main_arguments": ["/renderer.js"],
             "allowed_paths": [
@@ -65,7 +63,6 @@ sub vcl_init {
             "hugepage_arena_size": 64,
             "request_hugepage_arena_size": 32,
             "ephemeral": true,
-            "ephemeral_keep_working_memory": true,
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
             "main_arguments": ["/output.js"],
             "allowed_paths": [
