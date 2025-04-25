@@ -26,7 +26,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get -y install curl lib
 WORKDIR /build
 # Do not put rustflags in .cargo/config.toml as that causes build error:
 # error: cannot produce proc-macro for `asn1-rs-derive v0.4.0` as the target `x86_64-unknown-linux-gnu` does not support these crate types
-ENV RUSTFLAGS="-C target-feature=+crt-static"
+ARG RUSTFLAGS="-C target-feature=+crt-static"
+ENV RUSTFLAGS="${RUSTFLAGS}"
 # Build and cache the dependencies
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src benches \
@@ -37,7 +38,7 @@ RUN mkdir src benches \
     && rm -rf src benches
 # Build
 COPY --exclude=*.vcl --exclude=*.md --exclude=*.js --exclude=Dockerfile . ./
-RUN  cargo build --release --target x86_64-unknown-linux-gnu
+RUN cargo build --release --target x86_64-unknown-linux-gnu
 
 FROM varnish
 ENV VMOD_RUN_DEPS="libcurl4 libpcre3 libarchive13 libjemalloc2"
