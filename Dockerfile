@@ -56,9 +56,8 @@ COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/bl
 COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/onget /
 COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/output /
 WORKDIR /mnt
-COPY default.vcl .
-COPY hello.ext.js .
-COPY output.ext.js .
+COPY *.vcl .
+COPY *.ext.js .
 COPY output.html /
 COPY output.html .
 COPY renderer.ext.js .
