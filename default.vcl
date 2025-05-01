@@ -8,7 +8,7 @@ sub vcl_init {
     # Tell TinyKVM how to contact Varnish (Unix Socket *ONLY*).
     tinykvm.init_self_requests("/tmp/tinykvm.sock");
 
-    tinykvm.configure("main.js",
+    tinykvm.configure("hello.ext.js",
         """{
             "filename": "/deno-varnish",
             "executable_heap": true,
@@ -18,7 +18,8 @@ sub vcl_init {
             "request_hugepage_arena_size": 32,
             "ephemeral": true,
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
-            "main_arguments": ["/main.js"],
+            "main_arguments": ["/mnt/hello.ext.js"],
+            "warmup": { "num_requests": 100 },
             "allowed_paths": [
                 "/lib/x86_64-linux-gnu/libz.so.1",
                 "/lib/x86_64-linux-gnu/libgcc_s.so.1",
@@ -26,12 +27,12 @@ sub vcl_init {
                 "/lib/x86_64-linux-gnu/libc.so.6",
                 "/lib64/ld-linux-x86-64.so.2",
                 "/dev/urandom",
-                "/main.js"
+                "/mnt/hello.ext.js"
             ]
         }""");
-    tinykvm.start("main.js");
+    tinykvm.start("hello.ext.js");
 
-    tinykvm.configure("renderer.js",
+    tinykvm.configure("renderer.ext.js",
         """{
             "filename": "/deno-varnish",
             "executable_heap": true,
@@ -41,7 +42,8 @@ sub vcl_init {
             "request_hugepage_arena_size": 32,
             "ephemeral": true,
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
-            "main_arguments": ["/renderer.js"],
+            "main_arguments": ["/mnt/renderer.ext.js"],
+            "warmup": { "num_requests": 100 },
             "allowed_paths": [
                 "/lib/x86_64-linux-gnu/libz.so.1",
                 "/lib/x86_64-linux-gnu/libgcc_s.so.1",
@@ -49,12 +51,12 @@ sub vcl_init {
                 "/lib/x86_64-linux-gnu/libc.so.6",
                 "/lib64/ld-linux-x86-64.so.2",
                 "/dev/urandom",
-                "/renderer.js"
+                "/mnt/renderer.ext.js"
             ]
         }""");
-    tinykvm.start("renderer.js");
+    tinykvm.start("renderer.ext.js");
 
-    tinykvm.configure("output.js",
+    tinykvm.configure("output.ext.js",
         """{
             "filename": "/deno-varnish",
             "executable_heap": true,
@@ -64,7 +66,8 @@ sub vcl_init {
             "request_hugepage_arena_size": 32,
             "ephemeral": true,
             "environment": ["DENO_V8_FLAGS=--max-old-space-size=64,--max-semi-space-size=64"],
-            "main_arguments": ["/output.js"],
+            "main_arguments": ["/mnt/output.ext.js"],
+            "warmup": { "num_requests": 100 },
             "allowed_paths": [
                 "/lib/x86_64-linux-gnu/libz.so.1",
                 "/lib/x86_64-linux-gnu/libgcc_s.so.1",
@@ -73,10 +76,11 @@ sub vcl_init {
                 "/lib64/ld-linux-x86-64.so.2",
                 "/dev/urandom",
                 "/output.html",
-                "/output.js"
+                "/mnt/output.html",
+                "/mnt/output.ext.js"
             ]
         }""");
-    tinykvm.start("output.js");
+    tinykvm.start("output.ext.js");
 
     tinykvm.configure("blockon",
         """{
@@ -135,26 +139,14 @@ sub vcl_synth {
         set resp.body = "Hello, World!";
         set resp.status = 200;
     } else if (resp.status == 702) {
-        set resp.body = std.fileread("/output.html");
+        set resp.body = std.fileread("/mnt/output.html");
         set resp.status = 200;
     }
     return (deliver);
 }
 
 sub vcl_backend_fetch {
-    if (bereq.url == "/blockon") {
-        set bereq.backend = tinykvm.program("blockon", bereq.url);
-    } else if (bereq.url == "/onget") {
-        set bereq.backend = tinykvm.program("onget", bereq.url);
-    } else if (bereq.url == "/output.rs") {
-        set bereq.backend = tinykvm.program("output.rs", bereq.url);
-    } else if (bereq.url == "/output.js") {
-        set bereq.backend = tinykvm.program("output.js", bereq.url);
-    } else if (bereq.url == "/renderer.js") {
-        set bereq.backend = tinykvm.program("renderer.js", bereq.url);
-    } else {
-        set bereq.backend = tinykvm.program("main.js", bereq.url);
-    }
+    set bereq.backend = tinykvm.program(regsub(bereq.url, "/", ""), bereq.url);
     return (fetch);
 }
 

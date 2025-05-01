@@ -22,8 +22,10 @@ RUN set -e; \
     cmake --build . -j6;
 
 FROM rust:1.86-slim-bookworm AS build_rust
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get -y install curl libclang-dev build-essential && rm -rf /var/lib/apt/lists/*
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get -y install git curl libclang-dev build-essential cmake clang && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
+
+FROM build_rust AS build_deno_varnish
 # Do not put rustflags in .cargo/config.toml as that causes build error:
 # error: cannot produce proc-macro for `asn1-rs-derive v0.4.0` as the target `x86_64-unknown-linux-gnu` does not support these crate types
 ARG RUSTFLAGS="-C target-feature=+crt-static"
@@ -49,13 +51,17 @@ RUN set -e; \
     apt-get -y install $VMOD_RUN_DEPS; \
     rm -rf /var/lib/apt/lists/*;
 COPY --from=build_vmod /libvmod-tinykvm/.build/libvmod_*.so /usr/lib/varnish/vmods/
-COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/deno-varnish /
-COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/blockon /
-COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/onget /
-COPY --from=build_rust /build/target/x86_64-unknown-linux-gnu/release/output /
-COPY default.vcl /etc/varnish/default.vcl
-COPY main.js /
-COPY output.js /
+COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/deno-varnish /
+COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/blockon /
+COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/onget /
+COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/output /
+WORKDIR /mnt
+COPY default.vcl .
+COPY hello.ext.js .
+COPY output.ext.js .
 COPY output.html /
-COPY renderer.js /
+COPY output.html .
+COPY renderer.ext.js .
 USER varnish
+ENV VARNISH_HTTP_PORT=8080
+ENV VARNISH_VCL_FILE=/mnt/default.vcl
