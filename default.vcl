@@ -59,6 +59,7 @@ sub vcl_init {
     tinykvm.configure("output.ext.js",
         """{
             "filename": "/deno-varnish",
+            "current_working_directory": "/mnt",
             "executable_heap": true,
             "address_space": 66000,
             "max_memory": 3000,
