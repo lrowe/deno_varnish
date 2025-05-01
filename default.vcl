@@ -8,6 +8,7 @@ sub vcl_init {
     # Tell TinyKVM how to contact Varnish (Unix Socket *ONLY*).
     tinykvm.init_self_requests("/tmp/tinykvm.sock");
 
+    include "/mnt/deno.vcl";
     include "/mnt/deno-varnish.vcl";
     include "/mnt/rust.vcl";
 

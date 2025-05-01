@@ -20,10 +20,24 @@ RUN set -e; \
     cd .build; \
     cmake .. -DCMAKE_BUILD_TYPE=Release -DVARNISH_PLUS=OFF; \
     cmake --build . -j6;
+RUN set -e; \
+    cd .build; \
+    cp ../src/kvm/tests/kvm_api.h .; \
+    echo '#include "kvm_api.h"' > kvm_api.c; \
+    gcc -shared -o libkvm_api.so -fPIC kvm_api.c;
 
 FROM rust:1.86-slim-bookworm AS build_rust
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get -y install git curl libclang-dev build-essential cmake clang && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
+
+FROM build_rust AS build_deno
+RUN set -e; \
+    git init; \
+    git remote add origin https://github.com/lrowe/deno.git; \
+    git fetch --depth 1 origin b2191cc032b70a97d64dff5878ddb2db2faf2f5e; \
+    git checkout FETCH_HEAD; \
+    git submodule update --init --recursive;
+RUN cargo build
 
 FROM build_rust AS build_deno_varnish
 # Do not put rustflags in .cargo/config.toml as that causes build error:
@@ -50,6 +64,7 @@ RUN set -e; \
     apt-get update; \
     apt-get -y install $VMOD_RUN_DEPS; \
     rm -rf /var/lib/apt/lists/*;
+COPY --from=denoland/deno:bin-2.3.1 /deno /usr/local/bin/deno
 COPY --from=build_vmod /libvmod-tinykvm/.build/libvmod_*.so /usr/lib/varnish/vmods/
 COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/deno-varnish /
 COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/blockon /
@@ -60,7 +75,9 @@ COPY *.vcl .
 COPY *.ext.js .
 COPY output.html /
 COPY output.html .
-COPY renderer.ext.js .
+COPY --from=build_vmod /libvmod-tinykvm/.build/libkvm_api.so .
+COPY varnish.ts .
+COPY *.ffi.ts .
 USER varnish
 ENV VARNISH_HTTP_PORT=8080
 ENV VARNISH_VCL_FILE=/mnt/default.vcl
