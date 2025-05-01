@@ -42,6 +42,7 @@ tinykvm.configure("output.ext.js",
             "/lib/x86_64-linux-gnu/libc.so.6",
             "/lib64/ld-linux-x86-64.so.2",
             "/dev/urandom",
+            "/mnt",
             "/mnt/output.html",
             "/mnt/output.ext.js"
         ]
