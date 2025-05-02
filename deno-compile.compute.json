@@ -1,0 +1,64 @@
+{
+  "deno-compile": {
+    "executable_heap": true,
+    "address_space": 66000,
+    "max_memory": 3000,
+    "hugepage_arena_size": 64,
+    "request_hugepage_arena_size": 32,
+    "environment": [
+      "RUST_BACKTRACE=1",
+      "VARNISH_TINYKVM_API_PATH=/mnt/libkvm_api.so"
+    ],
+    "main_arguments": [],
+    "warmup": { "num_requests": 100 },
+    "allowed_paths": [
+      "/dev/urandom",
+      "/lib/x86_64-linux-gnu/libdl.so.2",
+      "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "/lib/x86_64-linux-gnu/librt.so.1",
+      "/lib/x86_64-linux-gnu/libpthread.so.0",
+      "/lib/x86_64-linux-gnu/libm.so.6",
+      "/lib/x86_64-linux-gnu/libc.so.6",
+      "/lib64/ld-linux-x86-64.so.2",
+      "/mnt/libkvm_api.so"
+    ]
+  },
+  "hello.ffi.exe": {
+    "start": true,
+    "group": "deno-compile",
+    "filename": "/mnt/hello.ffi.exe",
+    "allowed_paths": [
+      {
+        "virtual": "/proc/self/exe",
+        "real": "/mnt/hello.ffi.exe",
+        "symlink": true
+      }
+    ]
+  },
+  "output.ffi.exe": {
+    "start": true,
+    "group": "deno-compile",
+    "current_working_directory": "/mnt",
+    "filename": "/mnt/output.ffi.exe",
+    "allowed_paths": [
+      {
+        "virtual": "/proc/self/exe",
+        "real": "/mnt/output.ffi.exe",
+        "symlink": true
+      },
+      "/mnt/output.html"
+    ]
+  },
+  "renderer.ffi.exe": {
+    "start": true,
+    "group": "deno-compile",
+    "filename": "/mnt/renderer.ffi.exe",
+    "allowed_paths": [
+      {
+        "virtual": "/proc/self/exe",
+        "real": "/mnt/renderer.ffi.exe",
+        "symlink": true
+      }
+    ]
+  }
+}

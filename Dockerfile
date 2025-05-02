@@ -78,6 +78,12 @@ COPY output.html .
 COPY --from=build_vmod /libvmod-tinykvm/.build/libkvm_api.so .
 COPY varnish.ts .
 COPY *.ffi.ts .
+RUN set -e; \
+    export V8_FLAGS="--single-threaded,--max-old-space-size=64,--max-semi-space-size=64"; \
+    deno compile --allow-all "--v8-flags=$V8_FLAGS" -o hello.ffi.exe hello.ffi.ts; \
+    deno compile --allow-all "--v8-flags=$V8_FLAGS" -o output.ffi.exe output.ffi.ts; \
+    # https://github.com/denoland/deno/issues/29129
+    deno compile --no-check --allow-all "--v8-flags=$V8_FLAGS" -o renderer.ffi.exe renderer.ffi.ts;
 USER varnish
 ENV VARNISH_HTTP_PORT=8080
 ENV VARNISH_VCL_FILE=/mnt/default.vcl
