@@ -83,8 +83,8 @@ fn op_varnish_backend_response(external: *const c_void, status: u16, #[string] c
     if http.is_warmup() {
         return;
     }
-    let us = http.0.take().unwrap().start.elapsed().as_micros();
-    eprintln!("{}", format!("deno request time {us} us"));
+    let _us = http.0.take().unwrap().start.elapsed().as_micros();
+    //eprintln!("{}", format!("deno request time {us} us"));
     varnish::backend_response(status, ctype, data);
 }
 
