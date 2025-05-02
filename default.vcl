@@ -8,15 +8,15 @@ sub vcl_init {
     # Tell TinyKVM how to contact Varnish (Unix Socket *ONLY*).
     tinykvm.init_self_requests("/tmp/tinykvm.sock");
 
-    include "/mnt/deno.vcl";
-    include "/mnt/deno-varnish.vcl";
-    include "/mnt/rust.vcl";
+    tinykvm.library("file:///mnt/deno-run.compute.json");
+    tinykvm.library("file:///mnt/deno-varnish.compute.json");
+    tinykvm.library("file:///mnt/rust.compute.json");
 
     return (ok);
 }
 
 sub vcl_recv {
-    if (req.url == "/synth") {
+    if (req.url == "/hello.synth") {
         return (synth(701));
     } else if (req.url == "/output.synth") {
         return (synth(702));

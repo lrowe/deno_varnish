@@ -1,0 +1,51 @@
+{
+  "deno-run": {
+    "executable_heap": true,
+    "address_space": 66000,
+    "max_memory": 3000,
+    "hugepage_arena_size": 64,
+    "request_hugepage_arena_size": 32,
+    "environment": [
+      "DENO_DIR=/nonexistent",
+      "DENO_V8_FLAGS=--single-threaded,--max-old-space-size=64,--max-semi-space-size=64",
+      "RUST_BACKTRACE=1",
+      "VARNISH_TINYKVM_API_PATH=/mnt/libkvm_api.so"
+    ],
+    "main_arguments": ["run", "--allow-all", "/mnt/hello.ffi.ts"],
+    "warmup": { "num_requests": 100 },
+    "allowed_paths": [
+      "/dev/urandom",
+      "/lib/x86_64-linux-gnu/libdl.so.2",
+      "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "/lib/x86_64-linux-gnu/librt.so.1",
+      "/lib/x86_64-linux-gnu/libpthread.so.0",
+      "/lib/x86_64-linux-gnu/libm.so.6",
+      "/lib/x86_64-linux-gnu/libc.so.6",
+      "/lib64/ld-linux-x86-64.so.2",
+      "/mnt/libkvm_api.so",
+      "/mnt/varnish.ts"
+    ]
+  },
+  "hello.ffi.ts": {
+    "start": true,
+    "group": "deno-run",
+    "filename": "/usr/local/bin/deno",
+    "main_arguments": ["run", "--allow-all", "/mnt/hello.ffi.ts"],
+    "allowed_paths": ["/mnt/hello.ffi.ts"]
+  },
+  "output.ffi.ts": {
+    "start": true,
+    "group": "deno-run",
+    "current_working_directory": "/mnt",
+    "filename": "/usr/local/bin/deno",
+    "main_arguments": ["run", "--allow-all", "/mnt/output.ffi.ts"],
+    "allowed_paths": ["/mnt/output.ffi.ts", "/mnt/output.html"]
+  },
+  "renderer.ffi.ts": {
+    "start": true,
+    "group": "deno-run",
+    "filename": "/usr/local/bin/deno",
+    "main_arguments": ["run", "--allow-all", "/mnt/renderer.ffi.ts"],
+    "allowed_paths": ["/mnt/renderer.ffi.ts", "/mnt/renderer.ext.js"]
+  }
+}

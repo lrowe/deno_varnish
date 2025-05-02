@@ -71,9 +71,9 @@ COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/bl
 COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/onget /
 COPY --from=build_deno_varnish /build/target/x86_64-unknown-linux-gnu/release/output /
 WORKDIR /mnt
-COPY *.vcl .
+COPY default.vcl .
+COPY *.compute.json .
 COPY *.ext.js .
-COPY output.html /
 COPY output.html .
 COPY --from=build_vmod /libvmod-tinykvm/.build/libkvm_api.so .
 COPY varnish.ts .
