@@ -1,3 +1,6 @@
+> [!NOTE]  
+> Superseded by https://github.com/libriscv/kvmserver
+
 # Experiment embedding deno_runtime in Varnish TinyKVM.
 
 This is very early in development, it only kinda works.
